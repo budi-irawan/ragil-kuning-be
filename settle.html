@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+    <title>Struk Pembayaran</title>
+    <style>
+        .container {
+            font-size: 10px;
+        }
+        p {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <p>BAK AIR BERSIH "RAGIL KUNING"</p>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <table class="struk-bayar">
+                    <tr>
+                        <td colspan="3">========================================</td>
+                    </tr>
+                    <tr>
+                        <td>Kasir </td>
+                        <td>:</td>
+                        <td>${struk_baru.kasir}</td>
+                    </tr>
+                    <tr>
+                        <td>Tanggal</td>
+                        <td>:</td>
+                        <td>${struk_baru.tanggal}</td>
+                    </tr>
+                    <tr>
+                        <td>Jam</td>
+                        <td>:</td>
+                        <td>${struk_baru.jam}</td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="3">=========================================</td>
+                    </tr>
+                    <tr>
+                        <td>Jumlah Pembayaran</td>
+                        <td>:</td>
+                        <td>${item.biaya_air}</td>
+                    </tr>
+                    <tr>
+                        <td>Jumlah Denda</td>
+                        <td>:</td>
+                        <td>${item.biaya_perawatan}</td>
+                    </tr>
+                    <tr>
+                        <td>Total </td>
+                        <td>:</td>
+                        <td>${item.total_pembayaran}</td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="3">=========================================</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
