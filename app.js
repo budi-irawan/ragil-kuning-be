@@ -1,11 +1,3 @@
-// 'use strict';
-// const escpos = require('escpos');
-// escpos.USB = require('escpos-usb');
-// const device  = new escpos.USB();
-// console.log(device);
-// const options = { encoding: "GB18030" /* default */ }
-// const printer = new escpos.Printer(device, options);
-
 var createError = require('http-errors');
 var express = require('express');
 var app = express();
@@ -21,7 +13,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 var indexRouter = require('./router/index');
-
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -54,7 +45,7 @@ app.use((err, req, res, next) => {
   }
 });
 
-const port = 3001
+const port = 3002
 app.listen(port, () => {
   console.log(`Server running on port : ${port}`)
 });

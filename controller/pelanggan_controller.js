@@ -122,7 +122,7 @@ class Controller {
       const excelToJson = require('convert-excel-to-json');
  
       const result = excelToJson({
-          sourceFile: './uploads/KRAGILAN-MEI.xlsx'
+          sourceFile: './uploads/KRAGILAN-JUNI.xlsx'
       });
       let dataPemakaian = result.Sheet1
       let hasil = []
@@ -137,16 +137,16 @@ class Controller {
           if (dataPemakaian[i].A === pelanggan[h].nama_pelanggan) {
             let objPemakaian = {
               id: uuid_v4(),
-              tanggal_input: '2023-05-30',
+              tanggal_input: '2023-06-17',
               meter_awal: dataPemakaian[i].B,
               meter_akhir: dataPemakaian[i].C,
               selisih: dataPemakaian[i].D,
               nominal_tarif: 2000,
               biaya_perawatan: 16000,
               total_tarif: dataPemakaian[i].D * 2000 + 16000,
-              bulan_id: '7557c190-6be5-4984-a52a-52500a2abf5e',
-              nama_bulan: 'Mei',
-              nomor_bulan: 4,
+              bulan_id: '4911f521-786d-4cb7-95a9-3a93a7ebc59d',
+              nama_bulan: 'Juni',
+              nomor_bulan: 5,
               pelanggan_id: pelanggan[h].pelanggan_id,
               status_pemakaian: 0,
               nominal_denda: 0,
@@ -181,14 +181,14 @@ class Controller {
       const excelToJson = require('convert-excel-to-json');
  
       const result = excelToJson({
-          sourceFile: './uploads/KRAGILAN-MEI.xlsx'
+          sourceFile: './uploads/KRAGILAN-JUNI.xlsx'
       });
       let dataPemakaian = result.Sheet1
       let hasil = []
       let pelanggan = await koneksi.query(`select p.id as "pemakaian_id", * 
       from pemakaian p 
       join pelanggan p2 on p2.id = p.pelanggan_id 
-      where p.bulan_id = '7557c190-6be5-4984-a52a-52500a2abf5e'`, { type: QueryTypes.SELECT })
+      where p.bulan_id = '4911f521-786d-4cb7-95a9-3a93a7ebc59d'`, { type: QueryTypes.SELECT })
       console.log(pelanggan.length);
       console.log(dataPemakaian.length);
 

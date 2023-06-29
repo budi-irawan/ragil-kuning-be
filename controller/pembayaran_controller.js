@@ -80,6 +80,7 @@ class Controller {
           nominal_tarif: data[j].nominal_tarif,
           biaya_air: data[j].biaya_air,
           biaya_perawatan: data[j].biaya_perawatan,
+          selisih: data[j].selisih,
           total_terbayar: 0,
           nominal_denda: 0,
           total_pembayaran: 0,
