@@ -14,6 +14,7 @@ router.post('/cetakStruk', Controller.cetakStruk);
 router.get('/list', Controller.list);
 router.get('/laporanPembayaranPerHari', Controller.laporanPembayaranPerHari);
 router.post('/laporanPembayaranPerTanggal', Controller.laporanPembayaranPerTanggal);
+router.post('/detailSettlementPerTanggal', Controller.detailSettlementPerTanggal);
 router.post('/cetakLaporanPembayaranPerTanggal', Controller.cetakLaporanPembayaranPerTanggal);
 router.get('/detailsById/:id', Controller.detailsById);
 router.get('/cetakSuratPeringatan/:pelanggan_id', Controller.cetakSuratPeringatan);

@@ -364,6 +364,25 @@ class Controller {
     }
   }
 
+  static async detailSettlementPerTanggal(req, res) {
+    let { tanggal } = req.body
+    try {
+      let data = await koneksi.query(`select p2.pelanggan_id , p3.nama_pelanggan ,d.nama_desa ,d2.nama_dusun, sum(p.total_terbayar) as "total_terbayar",sum(p.nominal_denda) as "total_denda_terbayar",sum(p.total_terbayar+p.nominal_denda) as "total"
+      from pembayaran p 
+      join pemakaian p2 on p2.id = p.pemakaian_id 
+      join pelanggan p3 on p3.id = p2.pelanggan_id 
+      join desa d on d.id = p3.desa_id 
+      join dusun d2 on d2.id = p3.dusun_id 
+      where p."deletedAt" isnull and p2."deletedAt" isnull and p3."deletedAt" isnull and date(p.tanggal_bayar) = '${tanggal}' 
+      group by p2.pelanggan_id , p3.nama_pelanggan, d.nama_desa , d2.nama_dusun`, { type: QueryTypes.SELECT })
+
+      res.status(200).json({ status: 200, message: "sukses", data })
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "gagal", data: err })
+    }
+  }
+
   static async laporanPembayaranPerTanggal(req, res) {
     let { tanggal } = req.body
     try {

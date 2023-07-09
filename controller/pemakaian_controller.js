@@ -2,6 +2,7 @@ const { v4: uuid_v4 } = require("uuid");
 const { koneksi } = require('../config/connection')
 const { QueryTypes } = require('sequelize');
 const pemakaian = require("../model/pemakaian_model");
+const moment = require("moment")
 
 class Controller {
   static async create(req, res) {
@@ -16,6 +17,25 @@ class Controller {
       } else {
         meter_awal = cek_pemakaian[0].meter_akhir
       }
+      let data_pemakaian = await pemakaian.create({ id: uuid_v4(), tanggal_input, nama_bulan, nomor_bulan, meter_awal, meter_akhir, selisih, nominal_tarif, biaya_perawatan, total_tarif, sisa_pembayaran: total_tarif, pelanggan_id, bulan_id, nominal_denda })
+      res.status(200).json({ status: 200, message: "sukses", data: data_pemakaian });
+    } catch (err) {
+      console.log(req.body);
+      console.log(err);
+      res.status(500).json({ status: 500, message: "gagal", data: err });
+    }
+  }
+
+  static async createBulk(req, res) {
+    let { tanggal_input, nama_bulan, nomor_bulan, bulan_id, bulk_pemakaian } = req.body;
+
+    try {
+      let cek_pemakaian = await koneksi.query(`select p.id as "pelanggan_id", p.nama_pelanggan ,gt.nominal_tarif ,gt.biaya_perawatan ,gt.nominal_denda ,
+      ( select p2.meter_akhir as "bulan_lalu" from pemakaian p2 where p."deletedAt" isnull and p2.pelanggan_id = p.id order by p2."createdAt" desc limit 1 )
+      from pelanggan p 
+      join golongan_tarif gt on gt.id = p.golongan_tarif_id 
+      where p."deletedAt" isnull and gt."deletedAt" isnull`, { type: QueryTypes.SELECT })
+      
       let data_pemakaian = await pemakaian.create({ id: uuid_v4(), tanggal_input, nama_bulan, nomor_bulan, meter_awal, meter_akhir, selisih, nominal_tarif, biaya_perawatan, total_tarif, sisa_pembayaran: total_tarif, pelanggan_id, bulan_id, nominal_denda })
       res.status(200).json({ status: 200, message: "sukses", data: data_pemakaian });
     } catch (err) {
@@ -175,6 +195,38 @@ class Controller {
       data[0].pelanggan = dataPelanggan
 
       res.status(200).render("formulir_pencatatan", { status: 200, message: "sukses", data })
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "gagal", data: err })
+    }
+  }
+
+  static async getBulanByTanggalInput(req, res) {
+    const { tanggal_input } = req.body
+    try {
+      console.log(tanggal_input);
+      let tgl = moment(tanggal_input).format("YYYY-MM-DD")
+      let nomor_bulan = await koneksi.query(`select extract (month from timestamp '${tgl}') as "nomor_bulan"`, { type: QueryTypes.SELECT })
+      let nb = nomor_bulan[0].nomor_bulan - 1
+      let data = await koneksi.query(`select b.id as "bulan_id", * from bulan b 
+      join tahun t on t.id = b.tahun_id 
+      where b."deletedAt" isnull and t."deletedAt" isnull and t.status_tahun = 1 and b.nomor_bulan = ${nb} `, { type: QueryTypes.SELECT })
+      res.status(200).json({ status: 200, message: "sukses", data })
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "gagal", data: err })
+    }
+  }
+
+  static async getPemakaianBulanLalu(req, res) {
+    const { dusun_id } = req.body
+    try {
+      let data = await koneksi.query(`select p.id as "pelanggan_id", p.nama_pelanggan ,gt.nominal_tarif ,gt.biaya_perawatan ,gt.nominal_denda ,
+      ( select p2.meter_akhir as "bulan_lalu" from pemakaian p2 where p."deletedAt" isnull and p2.pelanggan_id = p.id order by p2."createdAt" desc limit 1 )
+      from pelanggan p 
+      join golongan_tarif gt on gt.id = p.golongan_tarif_id 
+      where p."deletedAt" isnull and gt."deletedAt" isnull and p.dusun_id = '${dusun_id}' `, { type: QueryTypes.SELECT })
+      res.status(200).json({ status: 200, message: "sukses", data })
     } catch (err) {
       console.log(err);
       res.status(500).json({ message: "gagal", data: err })
