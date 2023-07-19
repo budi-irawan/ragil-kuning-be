@@ -212,7 +212,27 @@ class Controller {
 
   static async list(req, res) {
     try {
-      let data1 = await koneksi.query(`select p.pelanggan_id, p2.nama_pelanggan, p2.desa_id ,p2.dusun_id , d.nama_desa ,d2.nama_dusun , sum(p.selisih) as "jumlah_pemakaian", sum(p.total_tarif) as "jumlah_tagihan", sum(p.sisa_pembayaran) as "sisa_pembayaran", sum(p.total_tarif - p.sisa_pembayaran) as "jumlah_terbayar"  
+      let data1 = await koneksi.query(`select p.pelanggan_id, p2.nama_pelanggan, p2.desa_id ,p2.dusun_id , d.nama_desa ,d2.nama_dusun , 
+      (select sum(p3.selisih) as "jumlah_pemakaian"   
+      from pemakaian p3 
+      join pelanggan p2 on p2.id = p3.pelanggan_id 
+      where p3."deletedAt" isnull and p2."deletedAt" isnull and p3.sisa_pembayaran <> 0 
+      and p3.pelanggan_id = p.pelanggan_id), 
+      (select sum(p4.total_tarif) as "jumlah_tagihan"   
+      from pemakaian p4 
+      join pelanggan p2 on p2.id = p4.pelanggan_id 
+      where p4."deletedAt" isnull and p2."deletedAt" isnull and p4.sisa_pembayaran <> 0 
+      and p4.pelanggan_id = p.pelanggan_id), 
+      (select sum(p5.sisa_pembayaran) as "sisa_pembayaran"   
+      from pemakaian p5 
+      join pelanggan p2 on p2.id = p5.pelanggan_id 
+      where p5."deletedAt" isnull and p2."deletedAt" isnull and p5.sisa_pembayaran <> 0 
+      and p5.pelanggan_id = p.pelanggan_id), 
+      (select sum(p6.total_tarif - p6.sisa_pembayaran) as "jumlah_terbayar"   
+      from pemakaian p6 
+      join pelanggan p2 on p2.id = p6.pelanggan_id 
+      where p6."deletedAt" isnull and p2."deletedAt" isnull and p6.sisa_pembayaran <> 0 
+      and p6.pelanggan_id = p.pelanggan_id) 
       from pemakaian p 
       join pelanggan p2 on p2.id = p.pelanggan_id 
       join desa d on d.id = p2.desa_id 
@@ -238,7 +258,7 @@ class Controller {
       sum(p.sisa_pembayaran + p.nominal_denda) as "tagihan_per_bulan",  sum(p2.total_terbayar) as "total_terbayar" ,sum(p2.nominal_denda) as "nominal_denda"  
       from pemakaian p 
       left join pembayaran p2 on p2.pemakaian_id = p.id 
-      where p."deletedAt" isnull and p.pelanggan_id = '${pelanggan_id}' 
+      where p."deletedAt" isnull and p.sisa_pembayaran <> 0 and p.pelanggan_id = '${pelanggan_id}' 
       group by p.id 
       order by p."createdAt" `, { type: QueryTypes.SELECT })
 
@@ -599,6 +619,8 @@ class Controller {
       rp.width = 15
       let tanggal_bayar = sheet.getColumn('G')
       tanggal_bayar.width = 20
+      let byr = sheet.getColumn('H')
+      byr.width = 15
 
       sheet.getCell("A"+judul).value = "NO"
       sheet.getCell("B"+judul).value = "NAMA PELANGGAN"
@@ -648,6 +670,10 @@ class Controller {
       sheet.getCell("I"+(judul+1)).alignment = { horizontal: 'center' }
       sheet.getCell("J"+judul).alignment = { horizontal: 'center', vertical: 'middle' }
 
+      let jumlahPelanggan = data.length 
+      let jumlahPelangganLunas = 0
+      let jumlahPelangganBelumLunas = 0
+
       judul += 1
       for (let i = 0; i < data.length; i++) {
         data.judul = judul
@@ -658,16 +684,21 @@ class Controller {
         sheet.getCell("D"+judul).value = data[i].meter_akhir
         sheet.getCell("E"+judul).value = data[i].selisih
         sheet.getCell("F"+judul).value = data[i].total_tarif
+        sheet.getCell("F" + judul).numFmt = '#,##0';
         sheet.getCell("G"+judul).value = data[i].tanggal_bayar == null ? data[i].tanggal_bayar = '-' : moment(data[i].tanggal_bayar).format('LL')
         sheet.getCell("H"+judul).value = data[i].total_terbayar
+        sheet.getCell("H" + judul).numFmt = '#,##0';
         if (data[i].total_tarif == data[i].total_terbayar) {
           data[i].status = 'LUNAS'
+          jumlahPelangganLunas += 1
           sheet.getCell("I"+judul).value = "LUNAS"
         } else {
           data[i].status = '-'
+          jumlahPelangganBelumLunas += 1
           sheet.getCell("I"+judul).value = "-"
         }
         sheet.getCell("J"+judul).value = data[i].nominal_denda
+        sheet.getCell("J" + judul).numFmt = '#,##0';
 
         sheet.getCell("G"+judul).alignment = { horizontal: 'center' }
 
@@ -687,9 +718,11 @@ class Controller {
       sheet.mergeCells("A"+judul+":"+"E"+judul)
       sheet.getCell("A"+judul).value = "SUB.TOTAL"
       sheet.getCell("F"+judul).value = { formula: `SUM(F8:F${judul-1})` }
-      sheet.getCell("G"+judul).value = { formula: `(SUM(F8:F${judul-1})) - (SUM(H8:H${judul-1}))` }
       sheet.getCell("H"+judul).value = { formula: `SUM(H8:H${judul-1})` }
       sheet.getCell("J"+judul).value = { formula: `SUM(J8:J${judul-1})` }
+      sheet.getCell("F" + judul).numFmt = '#,##0';
+      sheet.getCell("H" + judul).numFmt = '#,##0';
+      sheet.getCell("J" + judul).numFmt = '#,##0';
 
       sheet.getCell("A"+judul).alignment = { horizontal: 'center' }
 
@@ -705,15 +738,81 @@ class Controller {
       sheet.getCell("I" + judul).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" } }
       sheet.getCell("J" + judul).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
 
-      // judul += 2 
-      // sheet.mergeCells("A"+judul+":"+"E"+judul)
-      // sheet.getCell("A"+judul).value = `JUMLAH UANG MASUK BULAN ${data[0].nama_bulan.toUpperCase()} TAHUN ${data[0].nama_tahun}`
-      // sheet.getCell("F"+judul).value = { formula: `SUM(H8:H${judul-1})` }
+      let keterangan = 2 
+      keterangan += judul
+      sheet.mergeCells("A"+ keterangan+":"+"B"+keterangan)
+      sheet.getCell("A"+ keterangan).value = "Keterangan :"
+      sheet.getCell("A"+ keterangan).font = { bold: true }
+      
+      keterangan += 1 
+      sheet.mergeCells("A"+ keterangan+":"+"E" + keterangan)
+      sheet.getCell("A"+ keterangan).value = `Jumlah Tagihan Bulan ${data[0].nama_bulan}`
+      sheet.mergeCells("F"+ keterangan+":"+"G"+ keterangan)
+      sheet.getCell("F"+ keterangan).value = { formula: `SUM(F8:F${keterangan-4})` }
+      sheet.getCell("F" + keterangan).numFmt = '"Rp "#,##0';
 
-      // judul += 1
-      // sheet.mergeCells("A"+judul+":"+"E"+judul)
-      // sheet.getCell("A"+judul).value = `JUMLAH UANG BELUM MASUK `
-      // sheet.getCell("F"+judul).value = { formula: `(SUM(F8:F${judul-1})) - (SUM(H8:H${judul-1}))` }
+      sheet.getCell("A" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" } }
+      sheet.getCell("F" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+
+      keterangan += 1 
+      sheet.mergeCells("A"+ keterangan+":"+"E" + keterangan)
+      sheet.getCell("A"+ keterangan).value = `Jumlah Uang Masuk Bulan ${data[0].nama_bulan}`
+      sheet.mergeCells("F"+ keterangan+":"+"G"+ keterangan)
+      sheet.getCell("F"+ keterangan).value = { formula: `SUM(H8:H${keterangan-5})` }
+      sheet.getCell("F" + keterangan).numFmt = '"Rp "#,##0';
+
+      sheet.getCell("A" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" } }
+      sheet.getCell("F" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+
+      keterangan += 1 
+      sheet.mergeCells("A"+ keterangan+":"+"E" + keterangan)
+      sheet.getCell("A"+ keterangan).value = `Jumlah Uang Belum Masuk Bulan ${data[0].nama_bulan}`
+      sheet.mergeCells("F"+ keterangan+":"+"G"+ keterangan)
+      sheet.getCell("F"+ keterangan).value = { formula: `(SUM(F8:F${keterangan-6})) - (SUM(H8:H${keterangan-6}))` }
+      sheet.getCell("F" + keterangan).numFmt = '"Rp "#,##0';
+
+      sheet.getCell("A" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" } }
+      sheet.getCell("F" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+      
+      keterangan += 1 
+      sheet.mergeCells("A" + keterangan+":"+"E"+ keterangan)
+      sheet.getCell("A" + keterangan).value = `Jumlah Denda Masuk Bulan ${data[0].nama_bulan}`
+      sheet.mergeCells("F" + keterangan+":"+"G"+ keterangan)
+      sheet.getCell("F" + keterangan).value = { formula: `SUM(J8:J${keterangan-7})` }
+      sheet.getCell("F" + keterangan).numFmt = '"Rp "#,##0';
+
+      sheet.getCell("A" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" } }
+      sheet.getCell("F" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+      
+      let prosentasePelangganLunas = jumlahPelangganLunas / jumlahPelanggan * 100
+      let prosentasePelangganBelumLunas = jumlahPelangganBelumLunas / jumlahPelanggan * 100
+
+      keterangan += 1 
+      sheet.mergeCells("A"+ keterangan+":"+"E" + keterangan)
+      sheet.getCell("A"+ keterangan).value = `Jumlah Pelanggan Lunas`
+      sheet.mergeCells("F"+ keterangan+":"+"G"+ keterangan)
+      sheet.getCell("F"+ keterangan).value = jumlahPelangganLunas + ' Orang / ' + prosentasePelangganLunas.toFixed(2) + ' %'
+
+      sheet.getCell("A" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" } }
+      sheet.getCell("F" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+
+      keterangan += 1 
+      sheet.mergeCells("A"+ keterangan+":"+"E" + keterangan)
+      sheet.getCell("A"+ keterangan).value = `Jumlah Pelanggan Belum Lunas`
+      sheet.mergeCells("F"+ keterangan+":"+"G"+ keterangan)
+      sheet.getCell("F"+ keterangan).value = jumlahPelangganBelumLunas + ' Orang / ' + prosentasePelangganBelumLunas.toFixed(2) + ' %'
+
+      sheet.getCell("A" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" } }
+      sheet.getCell("F" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+      
+      keterangan += 1 
+      sheet.mergeCells("A"+ keterangan+":"+"E" + keterangan)
+      sheet.getCell("A"+ keterangan).value = `Total Pelanggan `
+      sheet.mergeCells("F"+ keterangan+":"+"G"+ keterangan)
+      sheet.getCell("F"+ keterangan).value = jumlahPelanggan + ' Orang / 100 %'
+
+      sheet.getCell("A" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" } }
+      sheet.getCell("F" + keterangan).border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
 
       let fileName = `LAPORAN-PEMBAYARAN-${data[0].nama_dusun}-${data[0].nama_bulan.toUpperCase()}-${data[0].nama_tahun}.xlsx`;
       res.setHeader(

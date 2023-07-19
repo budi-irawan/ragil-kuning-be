@@ -3,6 +3,7 @@ const authentification = require("../middleware/authentification")
 const Controller = require("../controller/pemakaian_controller")
 
 router.post('/create', Controller.create);
+router.post('/createBulk', Controller.createBulk);
 router.post('/update', Controller.update);
 router.post('/delete', Controller.delete);
 router.post('/listPemakaianByPelangganId', Controller.listPemakaianByPelangganId);

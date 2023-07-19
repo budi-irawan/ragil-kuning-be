@@ -7,6 +7,8 @@ router.post('/register',  Controller.register);
 router.post('/login', Controller.login)
 router.get('/profil', authentification, Controller.profil)
 router.get('/list', authentification, Controller.list)
+router.get('/detailsById/:id', authentification, Controller.detailsById)
+router.post('/update', Controller.update)
 router.post('/delete', Controller.delete)
 
 module.exports = router

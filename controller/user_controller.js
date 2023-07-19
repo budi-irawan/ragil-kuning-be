@@ -75,6 +75,28 @@ class Controller {
         }
     }
 
+    static async detailsById(req, res) {
+        const { id } = req.params
+        try {
+            let data = await koneksi.query(`select u.id as "user_id", * from "user" u where u."deletedAt" isnull and u.id = '${id}'`, { type: QueryTypes.SELECT })
+            res.status(200).json({ message: "sukses", data })
+        } catch (err) {
+            console.log(err);
+            res.status(500).json({ message: "gagal", data: err })
+        }
+    }
+
+    static update(req, res) {
+        const { id, nama_user, username, role } = req.body;
+        user.update({ nama_user, username, role }, { where: { id }, returning: true }).then((data) => {
+            res.status(200).json({ message: "sukses", data });
+        }).catch((err) => {
+            console.log(req.body);
+            console.log(err);
+            res.status(500).json({ message: "gagal", data: err });
+        });
+    }
+
     static delete(req, res) {
         const { id } = req.body;
         user.destroy({ where: { id } }).then((data) => {

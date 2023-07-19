@@ -30,14 +30,15 @@ class Controller {
     let { tanggal_input, nama_bulan, nomor_bulan, bulan_id, bulk_pemakaian } = req.body;
 
     try {
-      let cek_pemakaian = await koneksi.query(`select p.id as "pelanggan_id", p.nama_pelanggan ,gt.nominal_tarif ,gt.biaya_perawatan ,gt.nominal_denda ,
-      ( select p2.meter_akhir as "bulan_lalu" from pemakaian p2 where p."deletedAt" isnull and p2.pelanggan_id = p.id order by p2."createdAt" desc limit 1 )
-      from pelanggan p 
-      join golongan_tarif gt on gt.id = p.golongan_tarif_id 
-      where p."deletedAt" isnull and gt."deletedAt" isnull`, { type: QueryTypes.SELECT })
-      
-      let data_pemakaian = await pemakaian.create({ id: uuid_v4(), tanggal_input, nama_bulan, nomor_bulan, meter_awal, meter_akhir, selisih, nominal_tarif, biaya_perawatan, total_tarif, sisa_pembayaran: total_tarif, pelanggan_id, bulan_id, nominal_denda })
-      res.status(200).json({ status: 200, message: "sukses", data: data_pemakaian });
+      for (let i = 0; i < bulk_pemakaian.length; i++) {
+        bulk_pemakaian[i].id = uuid_v4()
+        bulk_pemakaian[i].tanggal_input = tanggal_input 
+        bulk_pemakaian[i].bulan_id = bulan_id 
+        bulk_pemakaian[i].nama_bulan = nama_bulan 
+        bulk_pemakaian[i].nomor_bulan = nomor_bulan
+      }
+      await pemakaian.bulkCreate(bulk_pemakaian)
+      res.status(200).json({ status: 200, message: "sukses" });
     } catch (err) {
       console.log(req.body);
       console.log(err);
@@ -204,7 +205,6 @@ class Controller {
   static async getBulanByTanggalInput(req, res) {
     const { tanggal_input } = req.body
     try {
-      console.log(tanggal_input);
       let tgl = moment(tanggal_input).format("YYYY-MM-DD")
       let nomor_bulan = await koneksi.query(`select extract (month from timestamp '${tgl}') as "nomor_bulan"`, { type: QueryTypes.SELECT })
       let nb = nomor_bulan[0].nomor_bulan - 1
