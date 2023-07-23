@@ -1,4 +1,6 @@
 var createError = require('http-errors');
+const https = require("https");
+const fs = request("fs");
 var express = require('express');
 var app = express();
 var path = require('path');
@@ -59,10 +61,13 @@ function getIPAddress() {
   return '0.0.0.0';
 }
 
-// console.log(getIPAddress());
+console.log(getIPAddress());
 
 const port = 3001
-app.listen(port, () => {
+
+https
+.createServer(app)
+.listen(port, () => {
   console.log(`Server running on port : ${port}`)
 });
 
