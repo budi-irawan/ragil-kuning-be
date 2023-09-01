@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { koneksi } = require('../config/connection');
 const pemakaian = require('./pemakaian_model')
+const user = require('./user_model')
 
 const pembayaran = koneksi.define('pembayaran', {
     id: {
@@ -44,6 +45,9 @@ const pembayaran = koneksi.define('pembayaran', {
 
 pembayaran.belongsTo(pemakaian, { foreignKey: 'pemakaian_id' })
 pemakaian.hasMany(pembayaran, { foreignKey: 'pemakaian_id' })
+
+pembayaran.belongsTo(user, { foreignKey: 'user_id' })
+user.hasMany(pembayaran, { foreignKey: 'user_id' })
 
 // pembayaran.sync({alter:true}).then((data) => {
 //     console.log('berhasil');

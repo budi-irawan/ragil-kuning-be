@@ -12,6 +12,7 @@ router.post('/listTagihanBelumLunasByPelangganId', Controller.listTagihanBelumLu
 router.post('/listPembayaranByPemakaianId', Controller.listPembayaranByPemakaianId);
 router.post('/cetakStruk', Controller.cetakStruk);
 router.get('/list', Controller.list);
+router.post('/listTagihanByNamaPelanggan', Controller.listTagihanByNamaPelanggan);
 router.get('/laporanPembayaranPerHari', Controller.laporanPembayaranPerHari);
 router.post('/laporanPembayaranPerTanggal', Controller.laporanPembayaranPerTanggal);
 router.post('/detailSettlementPerTanggal', Controller.detailSettlementPerTanggal);
@@ -19,6 +20,8 @@ router.post('/cetakLaporanPembayaranPerTanggal', Controller.cetakLaporanPembayar
 router.get('/detailsById/:id', Controller.detailsById);
 router.get('/cetakSuratPeringatan/:pelanggan_id', Controller.cetakSuratPeringatan);
 router.post('/laporanPembayaranPerBulan', Controller.laporanPembayaranPerBulan);
+router.post('/laporanHarian', Controller.laporanHarian);
+router.post('/laporanDetail', Controller.laporanDetail);
 router.get('/laporanPembayaranPerBulanExcel', Controller.laporanPembayaranPerBulanExcel);
 
 module.exports = router

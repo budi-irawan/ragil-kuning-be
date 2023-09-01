@@ -1,15 +1,14 @@
+require('dotenv').config({})
 var createError = require('http-errors');
-const https = require("https");
-const fs = request("fs");
 var express = require('express');
 var app = express();
 var path = require('path');
 var logger = require('morgan');
 const cors = require('cors');
 const corsOptions = {
-    origin:'*', 
-    credentials:true,            //access-control-allow-credentials:true
-    optionSuccessStatus:200
+  origin: '*',
+  credentials: true,            //access-control-allow-credentials:true
+  optionSuccessStatus: 200
 }
 
 app.use(cors(corsOptions));
@@ -24,7 +23,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, '/uploads/')));
-app.use('/uploads',express.static('uploads'));
+app.use('/uploads', express.static('uploads'));
 
 // app.use(expressLayout);
 
@@ -43,31 +42,14 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_TYPES") {
-    res.status(422).json({error: "only image "})
+    res.status(422).json({ error: "only image " })
   }
 });
 
-function getIPAddress() {
-  var interfaces = require('os').networkInterfaces();
-  for (var devName in interfaces) {
-    var iface = interfaces[devName];
-
-    for (var i = 0; i < iface.length; i++) {
-      var alias = iface[i];
-      if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
-        return alias.address;
-    }
-  }
-  return '0.0.0.0';
-}
-
-console.log(getIPAddress());
-
 const port = 3001
+// const host = process.env.host
 
-https
-.createServer(app)
-.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server running on port : ${port}`)
 });
 

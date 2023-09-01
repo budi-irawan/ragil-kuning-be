@@ -41,7 +41,7 @@ class Controller {
   }
 
   static async createPembayaranGabungan(req, res) {
-    let { tanggal_bayar, tanggal_jatuh_tempo, jumlah_bayar, nominal_denda, pelanggan_id } = req.body;
+    let { tanggal_bayar, tanggal_jatuh_tempo, jumlah_bayar, nominal_denda, pelanggan_id, user_id } = req.body;
 
     try {
       let tanggal = moment().format('D')
@@ -85,7 +85,8 @@ class Controller {
           nominal_denda: 0,
           total_pembayaran: 0,
           sisa_tagihan: 0,
-          pemakaian_id: data[j].pemakaian_id
+          pemakaian_id: data[j].pemakaian_id,
+          user_id: user_id
         }
 
         let objPemakaian = {
@@ -238,6 +239,45 @@ class Controller {
       join desa d on d.id = p2.desa_id 
       join dusun d2 on d2.id = p2.dusun_id 
       where p."deletedAt" isnull and p2."deletedAt" isnull 
+      group by p.pelanggan_id , p2.nama_pelanggan,p2.desa_id ,p2.dusun_id , d.nama_desa, d2.nama_dusun 
+      order by p2.nama_pelanggan`, { type: QueryTypes.SELECT })
+
+      res.status(200).json({ status: 200, message: "sukses", data: data1 })
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "gagal", data: err })
+    }
+  }
+
+  static async listTagihanByNamaPelanggan(req, res) {
+    const { nama_pelanggan } = req.body
+    try {
+      let data1 = await koneksi.query(`select p.pelanggan_id, p2.nama_pelanggan, p2.desa_id ,p2.dusun_id , d.nama_desa ,d2.nama_dusun , 
+      (select sum(p3.selisih) as "jumlah_pemakaian"   
+      from pemakaian p3 
+      join pelanggan p2 on p2.id = p3.pelanggan_id 
+      where p3."deletedAt" isnull and p2."deletedAt" isnull and p3.sisa_pembayaran <> 0 
+      and p3.pelanggan_id = p.pelanggan_id), 
+      (select sum(p4.total_tarif) as "jumlah_tagihan"   
+      from pemakaian p4 
+      join pelanggan p2 on p2.id = p4.pelanggan_id 
+      where p4."deletedAt" isnull and p2."deletedAt" isnull and p4.sisa_pembayaran <> 0 
+      and p4.pelanggan_id = p.pelanggan_id), 
+      (select sum(p5.sisa_pembayaran) as "sisa_pembayaran"   
+      from pemakaian p5 
+      join pelanggan p2 on p2.id = p5.pelanggan_id 
+      where p5."deletedAt" isnull and p2."deletedAt" isnull and p5.sisa_pembayaran <> 0 
+      and p5.pelanggan_id = p.pelanggan_id), 
+      (select sum(p6.total_tarif - p6.sisa_pembayaran) as "jumlah_terbayar"   
+      from pemakaian p6 
+      join pelanggan p2 on p2.id = p6.pelanggan_id 
+      where p6."deletedAt" isnull and p2."deletedAt" isnull and p6.sisa_pembayaran <> 0 
+      and p6.pelanggan_id = p.pelanggan_id) 
+      from pemakaian p 
+      join pelanggan p2 on p2.id = p.pelanggan_id 
+      join desa d on d.id = p2.desa_id 
+      join dusun d2 on d2.id = p2.dusun_id 
+      where p."deletedAt" isnull and p2."deletedAt" isnull and p2."nama_pelanggan" ilike '%${nama_pelanggan}%'
       group by p.pelanggan_id , p2.nama_pelanggan,p2.desa_id ,p2.dusun_id , d.nama_desa, d2.nama_dusun 
       order by p2.nama_pelanggan`, { type: QueryTypes.SELECT })
 
@@ -822,6 +862,41 @@ class Controller {
       res.setHeader("Content-Disposition", "attachment; filename=" + fileName);
       await workbook.xlsx.write(res);
       res.end();
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "gagal", data: err })
+    }
+  }
+
+  static async laporanHarian(req, res) {
+    let { tanggal_pembayaran } = req.body
+    try {
+      let data = await koneksi.query(`select p.user_id , u.username ,u.nama_user ,u."role" , sum(p.total_terbayar) as "jumlah_pembayaran", sum(p.nominal_denda) as "jumlah_denda"   
+      from pembayaran p 
+      join "user" u on u.id = p.user_id 
+      where p."deletedAt" isnull and u."deletedAt" isnull and date(p.tanggal_bayar) = '${tanggal_pembayaran}'
+      group by p.user_id ,u.username ,u.nama_user ,u."role"`, { type: QueryTypes.SELECT })
+
+      res.status(200).json({ status: 200, message: "sukses", data })
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "gagal", data: err })
+    }
+  }
+
+  static async laporanDetail(req, res) {
+    let { tanggal_pembayaran } = req.body
+    try {
+      let data = await koneksi.query(`select p2.pelanggan_id , p3.nama_pelanggan ,d.nama_desa ,d2.nama_dusun, sum(p.total_terbayar) as "total_terbayar",sum(p.nominal_denda) as "total_denda_terbayar",sum(p.total_terbayar+p.nominal_denda) as "total"
+      from pembayaran p 
+      join pemakaian p2 on p2.id = p.pemakaian_id 
+      join pelanggan p3 on p3.id = p2.pelanggan_id 
+      join desa d on d.id = p3.desa_id 
+      join dusun d2 on d2.id = p3.dusun_id 
+      where p."deletedAt" isnull and p2."deletedAt" isnull and p3."deletedAt" isnull and date(p.tanggal_bayar) = '${tanggal_pembayaran}' 
+      group by p2.pelanggan_id , p3.nama_pelanggan, d.nama_desa , d2.nama_dusun`, { type: QueryTypes.SELECT })
+
+      res.status(200).json({ status: 200, message: "sukses", data })
     } catch (err) {
       console.log(err);
       res.status(500).json({ message: "gagal", data: err })

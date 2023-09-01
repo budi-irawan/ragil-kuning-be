@@ -12,11 +12,11 @@ class Controller {
       let cek_pemakaian = await koneksi.query(`select p.id as "pemakaian_id", * 
       from pemakaian p 
       where p."deletedAt" isnull and p.pelanggan_id = '${pelanggan_id}' order by p."createdAt" desc limit 1`, { type: QueryTypes.SELECT })
-      if (cek_pemakaian.length == 0) {
-        meter_awal = 0
-      } else {
-        meter_awal = cek_pemakaian[0].meter_akhir
-      }
+      // if (cek_pemakaian.length == 0) {
+      //   meter_awal = 0
+      // } else {
+      //   meter_awal = cek_pemakaian[0].meter_akhir
+      // }
       let data_pemakaian = await pemakaian.create({ id: uuid_v4(), tanggal_input, nama_bulan, nomor_bulan, meter_awal, meter_akhir, selisih, nominal_tarif, biaya_perawatan, total_tarif, sisa_pembayaran: total_tarif, pelanggan_id, bulan_id, nominal_denda })
       res.status(200).json({ status: 200, message: "sukses", data: data_pemakaian });
     } catch (err) {
